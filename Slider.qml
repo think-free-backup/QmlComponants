@@ -4,10 +4,16 @@ Item {
 
     id: sliderContainer
 
+    anchors.fill: parent
+
     property int positions : 3;
     property int currentPosition : 0;
 
-    anchors.fill: parent
+    property color color : "#22ffffff"
+    property color borderColor : "#09c"
+    property int borderWidth : 3
+    property real radius : 6
+    property int animationDuration : 500
 
     Rectangle {
 
@@ -16,18 +22,17 @@ Item {
         x: (sliderContainer.width / sliderContainer.positions) * sliderContainer.currentPosition;
         y: -5;
         width: parent.width / positions;
-        height: parent.height + 10
-
-        radius: 6
+        height: parent.height + 10       
         smooth: true
 
-        color:"#22ffffff"
-        border.color: "#09c"
-        border.width: 3
+        color: sliderContainer.color
+        border.color: sliderContainer.borderColor
+        radius: sliderContainer.radius
+        border.width: sliderContainer.borderWidth
 
         Behavior on x{
 
-            PropertyAnimation{properties: "x"; easing.type: Easing.InOutQuad; duration: 500}
+            PropertyAnimation{properties: "x"; easing.type: Easing.InOutQuad; duration: sliderContainer.animationDuration}
         }
 
         MouseArea {
