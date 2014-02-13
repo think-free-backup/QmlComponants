@@ -12,6 +12,9 @@ Item {
     property int currentPosition : 0;
     property int animationDuration : 500
 
+    readonly property int dragMax : ma.drag.maximumX
+    readonly property int dragMin : ma.drag.minimumX
+
     // Override the default component
 
     property alias visual : slider.sourceComponent
@@ -53,10 +56,20 @@ Item {
             PropertyAnimation{properties: "x"; easing.type: Easing.InOutQuad; duration: sliderContainer.animationDuration}
         }
 
+        onXChanged: {
+
+            if (ma.userMove){
+
+                var move = slider.x - ma.initialX
+                if ( move !== 0) sliderContainer.moved(move);
+            }
+        }
+
         // Event handling
 
         MouseArea {
 
+            id:ma
             anchors.fill: parent
             drag.target: parent;
             drag.axis: Drag.XAxis
@@ -65,6 +78,7 @@ Item {
 
             property bool hold : false;
             property int initialX : -1;
+            property bool userMove : false;
 
             onPressed : {
 
@@ -72,6 +86,7 @@ Item {
 
                 initialX = slider.x;
                 mouse.accepted = true;
+                userMove = true;
             }
 
             onPressAndHold: {
@@ -87,14 +102,17 @@ Item {
 
             onReleased: {
 
+                sliderContainer.released();
+
+                userMove = false;
+
                 if (hold){
 
                     hold = false;
-                    sliderContainer.released();
 
                     var cP = sliderContainer.currentPosition;
                     sliderContainer.currentPosition = -1;
-                    sliderContainer.currentPosition = cp;
+                    sliderContainer.currentPosition = cP;
                 }
 
                 else{
