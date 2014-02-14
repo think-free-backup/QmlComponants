@@ -117,10 +117,6 @@ Item {
 
                 else{
 
-                    var move = slider.x - initialX
-                    if ( move !== 0) sliderContainer.moved(move);
-                    initialX = -1;
-
                     sliderContainer.currentPosition = -1;
                     sliderContainer.currentPosition = Math.floor( (slider.x  / ((sliderContainer.width / sliderContainer.positions) /2) ) / 2 + 0.5);
                 }
