@@ -1,17 +1,31 @@
 import QtQuick 2.2
 
-MouseArea {
+Item {
 
-    id: circleMouseArea
+    width: 200
+    height: 200
 
-    anchors.fill: parent
-    onClicked: console.log("circle clicked");
-    onPressed: mouse.accepted = circleMouseArea.contains(mouse.x, mouse.y);
+    signal clicked;
 
-    function contains(x, y) {
-        var d = (area.width / 2);
-        var dx = (x - area.width / 2);
-        var dy = (y - area.height / 2);
-        return (d * d > dx * dx + dy * dy);
+    MouseArea {
+
+        id: circleMouseArea
+
+        anchors.fill: parent
+
+        onClicked: {
+
+            parent.clicked();
+        }
+        onPressed: mouse.accepted = circleMouseArea.contains(mouse.x, mouse.y);
+
+        function contains(x, y) {
+
+            var d = (circleMouseArea.width / 2);
+            var dx = (x - circleMouseArea.width / 2);
+            var dy = (y - circleMouseArea.height / 2);
+
+            return (d * d > dx * dx + dy * dy);
+        }
     }
 }
