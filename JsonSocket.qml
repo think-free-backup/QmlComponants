@@ -1,114 +1,187 @@
 import QtQuick 2.0
 import Qt.WebSockets 1.0
 
-WebSocket {
+Item{
 
-    id: ws
-    url: "ws://localhost:5002"
-    active: false
+    id: wscontainer
 
-    onStatusChanged:
-                    if (ws.status == WebSocket.Open)
-                        socketOpened();
-                    else if (ws.status == WebSocket.Closed)
-                        socketClosed();
-                    else if (ws.status == WebSocket.Error)
-                        socketError();
-
-    onTextMessageReceived:
-                    socketMessageReceived(message);
-
-
-    /* Variables */
-
-    property bool ready : false
-    property string hostname : "notsetted"
-    property string fqdn : "notsetted"
-    property string ssid : ""
-    property string buffer : ""
+    property alias url: ws.url
+    property alias hostname: ws.hostname
+    property alias fqdn: ws.fqdn
+    property alias ssid: ws.ssid
+    property alias buffer: ws.buffer
+    property alias active: ws.active
+    property alias ready: ws.ready
 
     signal jsonReceived(var json);
 
 
-    /* Event handling */
-
-    function socketOpened(){
-
-        console.log("JsonSocket connected");
-
-        // TODO : Start heartbeat timer
-
-        ws.sendMessage('{"type": "hello", "body" : { "name" : "' + ws.hostname + '", "ssid" : "' + ws.ssid + '"}}')
-    }
-
-    function socketClosed(){
-
-        ready = false;
-
-        console.log("JsonSocket closed")
-
-        // TODO : Reconnect
-    }
-
-    function socketError(){
-
-        console.log("JsonSocket error: " + ws.errorString)
-    }
-
-    /* Communication */
-
     function sendMessage(message){
 
-        ws.sendTextMessage(':::0:::' + message + ':::1:::');
+        ws.sendMessage(message);
     }
 
     function rpc(module, fct, params, dst){
 
-        ws.sendMessage('{ "type": "rpc", "body": {"module": "' + module + '", "fct": "' + fct + '", "params": ' + params + ' }, "src" : "' + ws.fqdn + '", "dst" : "' + dst + '" }');
+        ws.rpc(module, fct, params, dst);
     }
 
-    function socketMessageReceived(receivedstring){
+    WebSocket {
 
-        ws.buffer = ws.buffer + receivedstring;
+        id: ws
+        url: "ws://localhost:5002"
+        active: false
 
-        var messageArray = ws.buffer.split(":::0:::");
+        onStatusChanged:
+                        if (ws.status == WebSocket.Open)
+                            socketOpened();
+                        else if (ws.status == WebSocket.Closed)
+                            socketClosed();
+                        else if (ws.status == WebSocket.Error)
+                            socketError();
 
-        ws.buffer = "";
+        onTextMessageReceived:
+                        socketMessageReceived(message);
 
-        for (var i in messageArray){
 
-            var message = messageArray[i];
+        /* Variables */
 
-            if (message === "")
-                continue;
+        property bool ready : false
+        property string hostname : "notsetted"
+        property string fqdn : "notsetted"
+        property string ssid : ""
+        property string buffer : ""
 
-            if (message !== ""){
+        /* Event handling */
 
-                if (message.indexOf(":::1:::") !== -1)
-                    processJson( JSON.parse(message.split(":::1:::")[0] ));
-                else
-                    ws.buffer = message;
+        function socketOpened(){
+
+            console.log("JsonSocket connected");
+
+            hbmanager.start();
+
+            ws.sendMessage('{"type": "hello", "body" : { "name" : "' + ws.hostname + '", "ssid" : "' + ws.ssid + '"}}')
+        }
+
+        function socketClosed(){
+
+            hbmanager.stop();
+
+            ready = false;
+
+            console.log("JsonSocket closed")
+        }
+
+        function socketError(){
+
+            console.log("JsonSocket error: " + ws.errorString)
+        }
+
+
+        /* Communication */
+
+        function sendMessage(message){
+
+            ws.sendTextMessage(':::0:::' + message + ':::1:::');
+        }
+
+        function rpc(module, fct, params, dst){
+
+            ws.sendMessage('{ "type": "rpc", "body": {"module": "' + module + '", "fct": "' + fct + '", "params": ' + params + ' }, "src" : "' + ws.fqdn + '", "dst" : "' + dst + '" }');
+        }
+
+        function socketMessageReceived(receivedstring){
+
+            ws.buffer = ws.buffer + receivedstring;
+
+            var messageArray = ws.buffer.split(":::0:::");
+
+            ws.buffer = "";
+
+            for (var i in messageArray){
+
+                var message = messageArray[i];
+
+                if (message === "")
+                    continue;
+
+                if (message !== ""){
+
+                    if (message.indexOf(":::1:::") !== -1)
+                        processJson( JSON.parse(message.split(":::1:::")[0] ));
+                    else
+                        ws.buffer = message;
+                }
+            }
+        }
+
+        function processJson(json){
+
+            if (json.type === "hbAck"){
+
+                hbmanager.validate(json.body);
+            }
+            else if (json.type === "ssid"){
+
+                ws.ready = true;
+                ws.ssid = json.body.ssid
+                ws.fqdn = json.body.domain
+
+                console.log("JsonSocket ready");
+            }
+            else{
+
+                wscontainer.jsonReceived(json);
             }
         }
     }
 
-    function processJson(json){
+    Item{
 
-        if (json.type === "hbAck"){
+        id: hbmanager
 
+        property var hbarray : []
 
+        /* Heartbeat manager */
+
+        Timer{
+
+            id: hb
+
+            interval: 3000
+            running: false
+            repeat: true
+            onTriggered: {
+
+                ws.sendMessage('{ "type": "hb", "body": "' + guid() + '"}');
+            }
+
+            function guid (){
+              function s4() {
+                return Math.floor((1 + Math.random()) * 0x10000)
+                           .toString(16)
+                           .substring(1);
+              }
+              return function() {
+                return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+                       s4() + '-' + s4() + s4() + s4();
+              };
+            }
         }
-        else if (json.type === "ssid"){
 
-            ws.ready = true;
-            ws.ssid = json.body.ssid
-            ws.fqdn = json.body.domain
+        function start(){
 
-            console.log("JsonSocket ready");
+            hb.running = true
         }
-        else{
 
-            ws.jsonReceived(json);
+        function stop(){
+
+            hb.running = false
+        }
+
+        function validate(hb){
+
         }
     }
 }
+

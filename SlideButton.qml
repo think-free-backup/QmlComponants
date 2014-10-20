@@ -17,7 +17,7 @@ Item{
 
         id: loader
     
-        height: 100
+        height: slidebutton.height
         width: 200
         smooth: true
 
