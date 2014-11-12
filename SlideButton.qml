@@ -38,6 +38,7 @@ Item{
             drag.target: parent
             drag.axis: Drag.XAxis           
             drag.maximumX : slidebutton.width - loader.width
+            drag.minimumX: 0
 
             onReleased:{ 
 
