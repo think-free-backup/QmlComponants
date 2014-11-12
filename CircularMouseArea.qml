@@ -6,6 +6,7 @@ Item {
     height: 200
 
     signal clicked;
+    signal pressed;
 
     MouseArea {
 
@@ -17,7 +18,13 @@ Item {
 
             parent.clicked();
         }
-        onPressed: mouse.accepted = circleMouseArea.contains(mouse.x, mouse.y);
+        onPressed: {
+
+            mouse.accepted = circleMouseArea.contains(mouse.x, mouse.y);
+
+            if(mouse.accepted)
+                parent.pressed();
+        }
 
         function contains(x, y) {
 

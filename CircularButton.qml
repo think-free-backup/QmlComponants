@@ -19,4 +19,22 @@ Rectangle{
             button.clicked();
         }
     }
+
+    MultiPointTouchArea{
+
+        anchors.fill: parent
+        minimumTouchPoints: 1
+        maximumTouchPoints: 1
+
+        touchPoints: [
+
+            TouchPoint { id: touch1
+
+                onPressedChanged:
+
+                    if(pressed)
+                        button.clicked();
+            }
+        ]
+    }
 }
