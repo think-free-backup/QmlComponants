@@ -10,6 +10,11 @@ MouseArea {
 
     onReleased: startFisica()
 
+    function stop(){
+
+        initFisica.stop();
+    }
+
     /* Get last positions */
     property int oldX
     property int oldY
