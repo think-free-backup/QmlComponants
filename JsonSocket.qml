@@ -47,7 +47,7 @@ Item{
 
         property bool ready : false
         property string hostname : "notsetted"
-        property string fqdn : "notsetted"
+        property string fqdn : hostname
         property string ssid : ""
         property string buffer : ""
 
@@ -68,12 +68,16 @@ Item{
 
             ready = false;
             active = true
+            ws.fqdn = ws.hostname
 
             console.log("JsonSocket closed")
         }
 
         function socketError(){
 
+            hbmanager.stop();
+
+            ready = false;
             active = true
 
             console.log("JsonSocket error: " + ws.errorString)
@@ -129,7 +133,7 @@ Item{
                 ws.ssid = json.body.ssid
                 ws.fqdn = json.body.domain
 
-                console.log("JsonSocket ready");
+                console.log("JsonSocket ready : " + json.body.domain);
             }
             else{
 
@@ -142,15 +146,21 @@ Item{
 
         id: connectionChecker
 
-        interval: 2500
+        interval: 2000
         running: true
         repeat: true
         onTriggered: {
 
-            if (ws.status === WebSocket.Closed || ws.status === WebSocket.Error){
+            if(ws.errorString !== ""){
+
+                console.log("WS error : " + ws.errorString);
+            }
+
+            if (ws.status === WebSocket.Closed || ws.status === WebSocket.Error || ws.status === WebSocket.Closing){
 
                 console.log("Websocket is closed or error")
-                ws.active = false
+                ws.ready = false;
+                ws.active = false;
             }
 
             if (!ws.active){

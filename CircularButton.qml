@@ -5,7 +5,10 @@ Rectangle{
     id: button
 
     signal clicked();
+    signal entered();
+    signal exited();
     property double size: 150
+    property alias hoverEnabled : mouseArea.hoverEnabled
 
     width: size
     height: size
@@ -13,11 +16,16 @@ Rectangle{
 
     MouseArea{
 
+        id: mouseArea
         anchors.fill: parent
         onClicked: {
 
             button.clicked();
         }
+        onEntered:
+            button.entered();
+        onExited:
+            button.exited();
     }
 
     MultiPointTouchArea{
